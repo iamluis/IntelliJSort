@@ -9,10 +9,10 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 
 import java.io.IOException;
 import java.util.*;
+
 
 public class SortProperties extends AnAction {
     @Override
@@ -57,7 +57,7 @@ public class SortProperties extends AnAction {
             result.append(s);
             result.append("\n");
             List<String> properties = sortedLines.get(s);
-            properties.sort(String::compareTo);
+            properties = sortProperties(properties);
             for (String property : properties) {
                 result.append(property);
                 result.append("\n");
@@ -68,13 +68,37 @@ public class SortProperties extends AnAction {
 
         try {
             file.setBinaryContent(result.toString().getBytes());
+            //Messages.showMessageDialog(project, result.toString(), "Properties Sort", Messages.getInformationIcon());
         } catch (IOException e) {
             Messages.showMessageDialog(project, "An error occurred while sorting.", "Properties Sort", Messages.getInformationIcon());
         }
 
 
         Messages.showMessageDialog(project, "Success!", "Properties Sort", Messages.getInformationIcon());
+    }
 
+    private List<String> sortProperties(List<String> properties) {
+        Map<String, List<String>> comments = new HashMap<>();
+        List<String> toSort = new ArrayList<>();
 
+        List<String> comment = new ArrayList<>();
+        for (String property : properties) {
+            if (property.startsWith("#")) {
+                comment.add(property);
+            } else {
+                comments.put(property, comment);
+                toSort.add(property);
+                comment = new ArrayList<>();
+            }
+        }
+
+        Collections.sort(toSort);
+        LinkedList<String> result = new LinkedList<>();
+
+        for (String s : toSort) {
+            result.addAll(comments.get(s));
+            result.add(s);
+        }
+        return result;
     }
 }
